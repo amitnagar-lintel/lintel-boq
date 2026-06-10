@@ -311,6 +311,7 @@ tbody tr:hover td { background: var(--parchment); }
 }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -344,6 +345,7 @@ tbody tr:hover td { background: var(--parchment); }
       <span id="user-name"></span>
       <button id="logout-btn" onclick="signOut()">Sign out</button>
     </div>
+    <button class="btn" onclick="newQuote()" style="gap:5px;background:#F7F5F0;border-color:#E2DDD6" title="Clear all and start fresh">&#43; New Quote</button>
     <button class="btn" onclick="openSavedQuotes()" style="gap:5px">&#128193; Saved Quotes</button>
     <button class="btn btn-gold" onclick="saveQuote()" style="gap:5px">&#128190; Save Quote</button>
     <button class="btn" onclick="exportCSV()">&#8659; Export CSV</button>
@@ -495,7 +497,7 @@ tbody tr:hover td { background: var(--parchment); }
     <!-- Project details -->
     <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#9A9490;text-transform:uppercase;margin-bottom:12px">Project Details</div>
     <div style="background:#FAFAF8;border:1px solid #E0DCD4;border-radius:var(--r);padding:18px 20px;margin-bottom:28px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;font-size:11px">
-      <div><div style="color:#A09A93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-size:10px">Client</div><div style="font-weight:600;color:#1A1714" id="c-client">&#8212;</div></div>
+      <div><div style="color:#A09A93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-size:10px">Client</div><div style="font-weight:600;color:#1A1714" id="c-client">&#8212;</div><div style="font-size:10px;color:#A09A93;margin-top:2px" id="c-client-phone"></div><div style="font-size:10px;color:#A09A93;margin-top:1px" id="c-client-email"></div></div>
       <div><div style="color:#A09A93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-size:10px">Project</div><div style="font-weight:600;color:#1A1714" id="c-project">&#8212;</div></div>
       <div><div style="color:#A09A93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-size:10px">Property</div><div style="font-weight:600;color:#1A1714" id="c-property">&#8212;</div></div>
       <div><div style="color:#A09A93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-size:10px">Date</div><div style="font-weight:600;color:#1A1714" id="c-date">&#8212;</div></div>
@@ -598,6 +600,33 @@ tbody tr:hover td { background: var(--parchment); }
       7. Lintel Space Atelier is not responsible for products purchased from third parties. &bull;
       8. Production commences as per schedule communicated by Project Manager. &bull;
       9. Any site modifications to be communicated to designer and PM prior to production.
+    </div>
+
+
+    <!-- Payment Details -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#9A9490;text-transform:uppercase;margin-bottom:12px">Payment Details</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:20px;margin-bottom:24px;background:#FAFAF8;border:1px solid #E8E4DC;border-radius:var(--r);padding:20px 24px;align-items:start">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#0D0D27;margin-bottom:12px">Bank Transfer</div>
+        <table style="font-size:11px;border-collapse:collapse;width:100%">
+          <tr><td style="padding:4px 0;color:#A09A93;width:130px">Account Name</td><td style="padding:4px 0;font-weight:500;color:#1A1714">LINTEL SPACE ATELIER INDIA PRIVATE LIMITED</td></tr>
+          <tr><td style="padding:4px 0;color:#A09A93">Bank</td><td style="padding:4px 0;font-weight:500;color:#1A1714">IDFC FIRST Bank</td></tr>
+          <tr><td style="padding:4px 0;color:#A09A93">Account No.</td><td style="padding:4px 0;font-weight:600;color:#1A1714">10218270193</td></tr>
+          <tr><td style="padding:4px 0;color:#A09A93">IFSC Code</td><td style="padding:4px 0;font-weight:600;color:#1A1714">IDFB0080156</td></tr>
+          <tr><td style="padding:4px 0;color:#A09A93">SWIFT Code</td><td style="padding:4px 0;font-weight:500;color:#1A1714">IDFBINBBMUM</td></tr>
+          <tr><td style="padding:4px 0;color:#A09A93">Branch</td><td style="padding:4px 0;font-weight:500;color:#1A1714">Jayanagar, Bengaluru</td></tr>
+          <tr><td style="padding:4px 0;color:#A09A93">UPI ID</td><td style="padding:4px 0;font-weight:600;color:#C9A55A">Lintels234@idfcbank</td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:10px;color:#A09A93;line-height:1.8">
+          &#9432; Please add Client Name &amp; Project as payment reference.<br/>
+          Cheques payable to <strong>Lintel Space Atelier</strong>.
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;font-weight:600;color:#0D0D27;margin-bottom:8px">Scan to Pay</div>
+        <div id="upi-qr" style="width:140px;height:140px"></div>
+        <div style="font-size:10px;color:#A09A93;margin-top:6px">UPI / Google Pay / PhonePe</div>
+      </div>
     </div>
 
     <!-- Closing note -->
@@ -1205,6 +1234,75 @@ function delRow(id) {
   renderAll();
 }
 
+function editFieldEvt(inp) {
+  var id = parseInt(inp.dataset.id);
+  var field = inp.dataset.field;
+  var r = rows.find(function(x){ return x.id === id; });
+  if (r) {
+    r[field] = inp.value;
+    if (field === 'room') refreshRoomDL();
+    refreshTotals();
+  }
+}
+
+function editWH(inp) {
+  var id = parseInt(inp.dataset.id);
+  var field = inp.dataset.field;
+  var r = rows.find(function(x){ return x.id === id; });
+  if (r) {
+    r[field] = parseFloat(inp.value) || 0;
+    if (r.w && r.h) {
+      r.qty = Math.round(r.w * r.h * 10) / 10;
+      r.amount = r.rate * r.qty;
+      renderTable();
+    }
+    refreshTotals();
+  }
+}
+
+function editQty(inp) {
+  var id = parseInt(inp.dataset.id);
+  var r = rows.find(function(x){ return x.id === id; });
+  if (r) {
+    r.qty = parseFloat(inp.value) || 0;
+    r.amount = r.rate * r.qty;
+    refreshTotals();
+  }
+}
+
+function editRemarksEvt(inp) {
+  var id = parseInt(inp.dataset.id);
+  var r = rows.find(function(x){ return x.id === id; });
+  if (r) r.remarks = inp.value;
+}
+
+function editField(id, field, val) {
+  var r = rows.find(function(x){ return x.id === id; });
+  if (r) {
+    r[field] = val;
+    if (field === 'room') refreshRoomDL();
+    refreshTotals();
+  }
+}
+
+function autoCalcQty(id) {
+  var r = rows.find(function(x){ return x.id === id; });
+  if (r && r.w && r.h) {
+    r.qty = Math.round(r.w * r.h * 10) / 10;
+    r.amount = r.rate * r.qty;
+    renderTable();
+    refreshTotals();
+  }
+}
+
+function recalcAmount(id) {
+  var r = rows.find(function(x){ return x.id === id; });
+  if (r) {
+    r.amount = r.rate * r.qty;
+    refreshTotals();
+  }
+}
+
 function editRate(id, val) {
   var r = rows.find(function(x){ return x.id === id; });
   if (r) { 
@@ -1248,16 +1346,16 @@ function renderTable() {
     html += '<tr class="room-hdr"><td colspan="11">' + room + '</td></tr>';
     rrows.forEach(function(r) {
       html += '<tr>'
-        + '<td style="font-size:11px;color:var(--text2)">' + r.room + '</td>'
-        + '<td><span class="badge' + (r.custom?' badge-custom':'') + '">' + r.cat + '</span></td>'
-        + '<td style="font-size:12px">' + r.item + '</td>'
-        + '<td style="color:var(--text2)">' + r.unit + '</td>'
-        + '<td><input class="inline-input" type="number" value="' + r.rate + '" onchange="editRate(' + r.id + ',this.value)"/></td>'
-        + '<td style="color:var(--text3)">' + (r.w||'—') + '</td>'
-        + '<td style="color:var(--text3)">' + (r.h||'—') + '</td>'
-        + '<td>' + r.qty + '</td>'
+        + '<td><input class="inline-input" style="width:100px" type="text" value="' + r.room.replace(/"/g,'&quot;') + '" data-id="' + r.id + '" data-field="room" onchange="editFieldEvt(this)"/></td>'
+        + '<td><input class="inline-input" style="width:100px" type="text" value="' + r.cat.replace(/"/g,'&quot;') + '" data-id="' + r.id + '" data-field="cat" onchange="editFieldEvt(this)"/></td>'
+        + '<td><input class="inline-input" style="width:100%;min-width:120px" type="text" value="' + r.item.replace(/"/g,'&quot;') + '" data-id="' + r.id + '" data-field="item" onchange="editFieldEvt(this)"/></td>'
+        + '<td><input class="inline-input" style="width:45px" type="text" value="' + r.unit + '" data-id="' + r.id + '" data-field="unit" onchange="editFieldEvt(this)"/></td>'
+        + '<td><input class="inline-input" style="width:75px" type="number" value="' + r.rate + '" onchange="editRate(' + r.id + ',this.value)"/></td>'
+        + '<td><input class="inline-input" style="width:45px" type="number" value="' + (r.w||0) + '" data-id="' + r.id + '" data-field="w" onchange="editWH(this)"/></td>'
+        + '<td><input class="inline-input" style="width:45px" type="number" value="' + (r.h||0) + '" data-id="' + r.id + '" data-field="h" onchange="editWH(this)"/></td>'
+        + '<td><input class="inline-input" style="width:55px" type="number" value="' + r.qty + '" data-id="' + r.id + '" data-field="qty" onchange="editQty(this)"/></td>'
         + '<td style="font-weight:600">' + fmt(boosted(r)) + '</td>'
-        + '<td><input class="remark-input" type="text" placeholder="note..." onchange="editRemarks(' + r.id + ',this.value)"/></td>'
+        + '<td><input class="remark-input" type="text" placeholder="note..." value="' + (r.remarks||'').replace(/"/g,'&quot;') + '" data-id="' + r.id + '" oninput="editRemarksEvt(this)"/></td>'
         + '<td><button class="del-btn" onclick="delRow(' + r.id + ')" title="Delete">&times;</button></td>'
         + '</tr>';
     });
@@ -1327,6 +1425,10 @@ function renderClient() {
   var clientName = gv('m-client') || '—';
   el('c-client').textContent       = clientName;
   el('c-greeting-name').textContent= clientName;
+  var cpEl = document.getElementById('c-client-phone');
+  if (cpEl) cpEl.textContent = gv('m-client-phone') || '';
+  var ceEl = document.getElementById('c-client-email');
+  if (ceEl) ceEl.textContent = gv('m-client-email') || '';
   el('c-project').textContent      = gv('m-project')    || '—';
   el('c-property').textContent     = gv('m-property')   || '—';
   el('c-consultant').textContent   = gv('m-consultant') || '—';
@@ -1395,10 +1497,10 @@ function renderClientTotals() {
     : '';
   el('c-totals').innerHTML =
     '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E0DCD4"><span style="color:#6B6560">Work total</span><span>' + fmt(f.subM) + '</span></div>'
-  + '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E0DCD4"><span style="color:#6B6560">Design &amp; handling (' + f.fPct + '%)</span><span>' + fmt(f.fee) + '</span></div>'
+  + '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E0DCD4"><span style="color:#6B6560">Design &amp; handling</span><span>' + fmt(f.fee) + '</span></div>'
   + disc
   + '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #E0DCD4"><span style="color:#6B6560">Pre-GST total</span><span style="font-weight:600">' + fmt(f.base) + '</span></div>'
-  + '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:2px solid #2C1F5E"><span style="color:#6B6560">GST (' + f.gPct + '%)</span><span>' + fmt(f.gst) + '</span></div>'
+  + '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:2px solid #2C1F5E"><span style="color:#6B6560">GST</span><span>' + fmt(f.gst) + '</span></div>'
   + '<div style="display:flex;justify-content:space-between;padding:14px 18px;background-color:#1f1b16;border-radius:6px;margin-top:6px"><span style="font-weight:600;color:#A8864C;letter-spacing:0.5px">Total Project Value</span><span style="font-weight:700;color:#fff;font-size:17px">' + fmt(f.total) + '</span></div>'
   + '';
 }
@@ -1508,6 +1610,32 @@ function applyMarkup() {
 
 
 // ── SAVE / LOAD QUOTES ────────────────────────────────────────────────────────
+function newQuote() {
+  if (rows.length > 0) {
+    if (!confirm('Start a new quote? All current data will be cleared.\n\nTip: Click "Save Quote" first to save your current work.')) return;
+  }
+  // Clear all fields
+  var fields = ['m-client','m-client-phone','m-client-email','m-project','m-property','m-date','m-fee','m-gst','m-disc','m-markup','m-consultant','m-consultant-phone','m-validity','m-version','m-gst-no'];
+  fields.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (id === 'm-fee') { el.value = '9'; return; }
+    if (id === 'm-gst') { el.value = '18'; return; }
+    if (id === 'm-disc' || id === 'm-markup') { el.value = '0'; return; }
+    if (id === 'm-version') { el.value = 'v1.0'; return; }
+    if (id === 'm-date') {
+      var t = new Date();
+      el.value = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
+      return;
+    }
+    el.value = '';
+  });
+  rows = [];
+  uid = 0;
+  renderAll();
+  switchTab('estimator', 0);
+}
+
 function getSaveKey() {
   var stored = sessionStorage.getItem('lintel_user');
   var email = stored ? JSON.parse(stored).email : 'guest';
@@ -1530,7 +1658,7 @@ function saveQuote() {
   try { existing = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
 
   var quoteId = 'q_' + Date.now();
-  var metaFields = ['m-client','m-project','m-property','m-date','m-fee','m-gst','m-disc','m-markup','m-consultant','m-consultant-phone','m-validity','m-version'];
+  var metaFields = ['m-client','m-client-phone','m-client-email','m-project','m-property','m-date','m-fee','m-gst','m-disc','m-markup','m-consultant','m-consultant-phone','m-validity','m-version','m-gst-no'];
   var meta = {};
   metaFields.forEach(function(id) {
     var el = document.getElementById(id);
@@ -1728,6 +1856,20 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   buildCatDropdown();
   renderAll();
+  // Generate UPI QR code
+  try {
+    var qrEl = document.getElementById('upi-qr');
+    if (qrEl && typeof QRCode !== 'undefined') {
+      new QRCode(qrEl, {
+        text: 'upi://pay?pa=Lintels234@idfcbank&pn=Lintel+Space+Atelier&cu=INR',
+        width: 140,
+        height: 140,
+        colorDark: '#0D0D27',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  } catch(e) {}
 });
 </script>
 <div id="sq-overlay" onclick="closeSavedQuotes()" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(13,13,39,0.6)"></div>
